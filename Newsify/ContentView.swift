@@ -17,7 +17,7 @@ struct ContentView: View {
                 }
             Tab("Profile", systemImage: "person") {
                 SettingUIView()
-
+/tapbar/
             }
         }
     }
