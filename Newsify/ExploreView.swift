@@ -11,8 +11,9 @@ struct ExploreView: View {
     @State var catSelected = 0
     // Variabile di stato per attivare la navigazione automatica
     @State private var navigateToCategory = false
-        
-    var body: some View {
+    @State private var showBotSheet = false
+    @State private var showNotificationsSheet = false
+var body: some View {
         NavigationStack {
             ZStack {
                 Color(hex: "F4F4F4")
@@ -21,9 +22,11 @@ struct ExploreView: View {
                 VStack(spacing: 0) {
                     // BARRA SUPERIORE: Bot AI, Titolo e Notifiche
                     HStack {
-                        // Tasto Bot AI (Sinistra)
-                        NavigationLink(destination: EmptyView()) {
-                            Image(systemName: "cpu") // Icona bot AI
+                        // Tasto Bot AI (Sinistra) che apre lo sheet
+                        Button(action: {
+                            showBotSheet = true
+                        }) {
+                            Image(systemName: "sparkles")
                                 .font(.title2)
                                 .foregroundColor(Color(hex: "003D6C"))
                                 .padding(10)
@@ -41,8 +44,10 @@ struct ExploreView: View {
                         
                         Spacer()
                         
-                        // Tasto Notifiche (Destra)- modificare EmptyView
-                        NavigationLink(destination: EmptyView()) {
+                        // Tasto Notifiche (Destra)- apre lo sheet
+                        Button(action: {
+                            showNotificationsSheet = true
+                        }) {
                             Image(systemName: "bell.fill")
                                 .font(.title2)
                                 .foregroundColor(Color(hex: "003D6C"))
@@ -64,6 +69,12 @@ struct ExploreView: View {
                             Text("Sport").tag(3)
                         }
                         .pickerStyle(.segmented)
+                        .onAppear{
+                            let myCustomColor = UIColor(hex: "003D6C")
+                            let myCustomColor1 = UIColor(hex: "003D6C")
+                            UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: myCustomColor], for: .normal)
+                            UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: myCustomColor1], for: .selected)
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -125,7 +136,13 @@ struct ExploreView: View {
                         .navigationDestination(isPresented: $navigateToCategory) {
                             destinationView(for: catSelected)
                         }
-            
+            // Modificatori degli sheet in fondo al navigatorStack
+                        .sheet(isPresented: $showBotSheet) {
+                            BotSheetUIView()
+                        }
+                        .sheet(isPresented: $showNotificationsSheet) {
+                            NotificationsSheetUIView()
+                        }
         } //fine navstack
     } // fine body
     
@@ -159,5 +176,21 @@ extension Color {
         let r, g, b: UInt64
         (r, g, b) = ((int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff)
         self.init(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
+    }
+}
+//extension for picker color
+extension UIColor {
+    convenience init(hex: String) {
+        var cleanHex = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if cleanHex.hasPrefix("#") { cleanHex.remove(at: cleanHex.startIndex) }
+        
+        var rgb: UInt64 = 0
+        Scanner(string: cleanHex).scanHexInt64(&rgb)
+        
+        let r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
+        let g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
+        let b = CGFloat(rgb & 0x0000FF) / 255.0
+        
+        self.init(red: r, green: g, blue: b, alpha: 1.0)
     }
 }

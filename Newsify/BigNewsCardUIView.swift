@@ -14,8 +14,9 @@ struct BigNewsCardUIView: View {
             // Immagine con Icona Cuffie sovrapposta
             ZStack(alignment: .topLeading) {
             // Immagine principale della notizia
-                Image(systemName: "img")
+                Image("img")
                     .resizable()
+                    .aspectRatio(contentMode: .fit)
                     .scaledToFill()
                     .frame(height: 180)
                     .frame(maxWidth: .infinity)
@@ -42,7 +43,7 @@ struct BigNewsCardUIView: View {
                 Text("Terremoto in Venezuela: palazzi crollati, 32 morti e 700 feriti")
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color(hex: "003D6C"))
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
                         

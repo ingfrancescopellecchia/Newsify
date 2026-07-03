@@ -16,7 +16,7 @@ struct SmallNewsCardUIView: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(Color(hex: "003D6C"))
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)
             
