@@ -12,14 +12,17 @@ struct ExploreView: View {
     @State private var navigateToCategory = false
     @State private var showBotSheet = false
     @State private var showNotificationsSheet = false
+    // Notizia selezionata per aprire il dettaglio: usando questa invece di un
+    // vero NavigationLink nella riga, evitiamo che la List aggiunga la sua
+    // freccetta automatica (che riservava spazio a destra e scentrava la card).
+    @State private var selectedArticle: Article?
 
     @StateObject private var viewModel = NewsViewModel()
+    @ObservedObject private var bookmarksManager = BookmarksManager.shared
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Sfondo adattivo: chiaro/scuro senza bisogno di hex
-                Color(.systemGroupedBackground)
+            ZStack {                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -65,7 +68,6 @@ struct ExploreView: View {
                         Text("Sport").tag(3)
                     }
                     .pickerStyle(.segmented)
-                    // Basta il tint: si adatta da solo a light/dark, niente più UIAppearance
                     .tint(.accentColor)
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -81,7 +83,11 @@ struct ExploreView: View {
                         Spacer()
                     }
 
-                    // FEED SCORREVOLE DELLE NOTIZIE
+                    // FEED DELLE NOTIZIE
+                    // Nota: qui uso una List (invece della ScrollView di prima) perché
+                    // .swipeActions richiede una List per funzionare. Tutto lo stile di
+                    // default della List viene azzerato sotto per mantenere le card
+                    // identiche a come apparivano nella ScrollView.
                     Group {
                         if viewModel.isLoading && viewModel.articles.isEmpty {
                             Spacer()
@@ -96,15 +102,24 @@ struct ExploreView: View {
                             )
                             Spacer()
                         } else {
-                            ScrollView {
-                                VStack(spacing: 14) {
-                                    ForEach(Array(viewModel.articles.enumerated()), id: \.element.id) { index, article in
-                                        newsRow(for: article, isFirst: index == 0)
-                                    }
+                            List {
+                                ForEach(Array(viewModel.articles.enumerated()), id: \.element.id) { index, article in
+                                    newsRow(for: article, isFirst: index == 0)
+                                        .padding(.vertical, 7) // ~14pt totale tra una card e l'altra, come nella VStack originale
+                                        .listRowInsets(EdgeInsets())
+                                        .listRowSeparator(.hidden)
+                                        .listRowBackground(Color.clear)
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                            bookmarkButton(for: article)
+                                        }
+                                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                            bookmarkButton(for: article)
+                                        }
                                 }
-                                .padding(.top, 4)
-                                .padding(.bottom, 20)
                             }
+                            .listStyle(.plain)
+                            .scrollContentBackground(.hidden)
+                            .padding(.top, 4)
                             .refreshable {
                                 await viewModel.loadNews(query: query(for: catSelected))
                             }
@@ -120,8 +135,11 @@ struct ExploreView: View {
             .navigationDestination(isPresented: $navigateToCategory) {
                 destinationView(for: catSelected)
             }
+            .navigationDestination(item: $selectedArticle) { article in
+                NewsDetailView(article: article)
+            }
             .sheet(isPresented: $showBotSheet) {
-                BotSheetUIView()
+                BotSheetUIView(articles: viewModel.articles)
             }
             .sheet(isPresented: $showNotificationsSheet) {
                 NotificationsSheetUIView()
@@ -140,9 +158,17 @@ struct ExploreView: View {
     /// Riga singola del feed: card grande per la prima notizia, piccola per le altre.
     /// Estratta in una funzione separata per evitare timeout del type-checker
     /// (il compilatore fatica con troppi modificatori/condizioni annidate in un'unica espressione).
+    ///
+    /// Uso un Button (non un NavigationLink): la List aggiungerebbe in automatico
+    /// una freccetta di sistema che riserva spazio a destra della riga.
+    /// Le card (BigNewsCardUIView / SmallNewsCardUIView) hanno già un
+    /// `.padding(.horizontal)` integrato che dà margini simmetrici da sole,
+    /// quindi qui non serve aggiungere nessun'altra freccetta o padding extra.
     @ViewBuilder
     private func newsRow(for article: Article, isFirst: Bool) -> some View {
-        NavigationLink(destination: EmptyView()) {
+        Button {
+            selectedArticle = article
+        } label: {
             if isFirst {
                 BigNewsCardUIView(
                     title: article.title,
@@ -158,6 +184,24 @@ struct ExploreView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    /// Bottone mostrato durante lo swipe: salva l'articolo nei bookmarks,
+    /// oppure lo rimuove se è già stato salvato in precedenza.
+    @ViewBuilder
+    private func bookmarkButton(for article: Article) -> some View {
+        let saved = bookmarksManager.isBookmarked(article)
+        Button {
+            withAnimation {
+                bookmarksManager.toggle(article)
+            }
+        } label: {
+            Label(
+                saved ? "Rimuovi" : "Salva",
+                systemImage: saved ? "bookmark.slash.fill" : "bookmark.fill"
+            )
+        }
+        .tint(saved ? .gray : .brand)
     }
 
     /// Query di ricerca associata a ogni tab del picker.

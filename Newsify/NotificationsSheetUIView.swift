@@ -8,35 +8,52 @@
 import SwiftUI
 
 struct NotificationsSheetUIView: View {
-    @Environment(\.dismiss) var dismiss
+
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
-        
         VStack {
-            HStack {
-                Text("Notifiche")
-                    .foregroundColor(.primary)
-                    .font(.title2)
-                    .bold()
-                Spacer()
-            }
-            .padding()
-            
-            NavigationStack{
-                List {
-                    NavigationLink(destination: EmptyView()) {
-                        Text("🔴 Terremoto in Venezuela - 10m fa")
-                            .foregroundColor(.primary)
-                    }
-                    NavigationLink(destination: EmptyView()) {
-                        Text("☀️ Caldo record a Roma - 1h fa")
-                            .foregroundColor(.primary)
-                    }
-                }
+            Text("Notifiche")
+                .font(.title2)
+                .bold()
+                .foregroundStyle(Color.primary)
+                .padding(.top, 12)
+
+            Spacer()
+
+            NavigationStack {
+                emptyStateView
             }
         }
-        .presentationDetents([.large]) // Apre lo sheet a schermo intero
+        .presentationDetents([.medium]) // Apre lo sheet a metà schermo
+    }
+
+    // MARK: Stato vuoto
+
+    private var emptyStateView: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "bell")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 60, height: 72)
+                .foregroundStyle(.primary)
+
+            VStack(spacing: 8) {
+                Text("Nessuna notifica")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(Color.primary)
+                    .multilineTextAlignment(.center)
+
+                Text("Le notifiche relative alle tue notizie preferite appariranno qui.")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(Color.primary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 40)
             }
         }
+    }
+}
 
 #Preview {
     NotificationsSheetUIView()

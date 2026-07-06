@@ -1,4 +1,3 @@
-//
 //  CategUIView.swift
 //  Newsify
 //
@@ -8,11 +7,34 @@
 import SwiftUI
 
 struct CategUIView: View {
+    let title: String
+    let count: Int
+    let iconName: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: iconName)
+                .foregroundColor(.black)
+                .frame(width: 24, height: 24)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                
+                Text("\(count) ARTICOLI")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 110)
+        .background(Color(.systemBackground))
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
 }
-
 #Preview {
-    CategUIView()
+    CategUIView(title: "MONDO", count: 248, iconName: "globe")
 }

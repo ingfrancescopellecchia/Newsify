@@ -11,7 +11,7 @@ struct NewsResponse: Codable {
     let articles: [Article]
 }
 
-struct Article: Codable, Identifiable {
+struct Article: Codable, Identifiable, Hashable {
     // NewsAPI non fornisce un id, lo generiamo noi
     var id: String { url }
 
@@ -23,6 +23,6 @@ struct Article: Codable, Identifiable {
     let publishedAt: String
 }
 
-struct ArticleSource: Codable {
+struct ArticleSource: Codable, Hashable {
     let name: String
 }

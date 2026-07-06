@@ -8,7 +8,7 @@ struct ContentView: View {
 
             }
             Tab("Search", systemImage: "magnifyingglass") {
-            SearchView()
+                SearchView()
                
             }
             Tab("Bookmarks", systemImage: "bookmark") {

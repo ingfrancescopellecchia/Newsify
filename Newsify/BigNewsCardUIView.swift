@@ -12,6 +12,24 @@ struct BigNewsCardUIView: View {
     let source: String
     var description: String? = nil
     var imageURL: URL? = nil
+    
+    // Manager condiviso per la lettura audio delle notizie.
+    @ObservedObject private var audioPlayer = ArticleAudioPlayer.shared
+
+    // Identificatore univoco dell'articolo per sapere se STA leggendo proprio questa card.
+    // Se in futuro l'Article ha un id/UUID proprio, passalo qui invece del titolo.
+    private var articleID: String { title }
+
+    private var isPlayingThisArticle: Bool {
+        audioPlayer.isPlaying(articleID)
+    }
+
+    // Testo che verrà letto ad alta voce: fonte, titolo e descrizione.
+    private var textToRead: String {
+        [source, title, description]
+            .compactMap { $0 }
+            .joined(separator: ". ")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -41,19 +59,25 @@ struct BigNewsCardUIView: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
 
-                // Icona Audio / Cuffie
-                HStack(spacing: 4) {
-                    Image(systemName: "headphones")
-                        .font(.system(size: 11, weight: .bold))
-                    Text("AUDIO")
-                        .font(.system(size: 9, weight: .bold))
+                // Icona Audio / Cuffie — ora è un bottone che avvia/ferma la lettura vocale.
+                Button {
+                    audioPlayer.toggle(articleID: articleID, text: textToRead)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: isPlayingThisArticle ? "stop.fill" : "headphones")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(isPlayingThisArticle ? "IN ASCOLTO" : "AUDIO")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(20)
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.black.opacity(0.6))
-                .cornerRadius(20)
+                .buttonStyle(.plain)
                 .padding(12)
+                .animation(.easeInOut(duration: 0.2), value: isPlayingThisArticle)
             }
 
             // Testi della notizia

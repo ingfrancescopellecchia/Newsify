@@ -8,11 +8,40 @@
 import SwiftUI
 
 struct SectionRowUIView: View {
+    let rank: Int
+    let title: String
+    let tag: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        HStack(alignment: .center, spacing: 14) {
+            // Numero incrementato
+            Text("\(rank)")
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .frame(width: 20, alignment: .leading)
+            
+            // Titolo della notizia
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.black)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Tag con sfondo grigio chiaro
+            Text(tag)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            
+            // Freccia di navigazione interna alla card
+            Image(systemName: "chevron.right")
+                .font(.footnote)
+                .foregroundColor(.secondary.opacity(0.4))
+        }
     }
-}
-
-#Preview {
-    SectionRowUIView()
 }
