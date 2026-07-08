@@ -14,26 +14,32 @@ enum NewsError: Error {
 final class NewsService {
     static let shared = NewsService()
 
-    // ⚠️ Per ora la mettiamo qui, ma vedi la nota in fondo alla risposta
-    // su come non tenerla in chiaro nel codice sorgente.
-    private let apiKey = "228b6c3cf68c411ea1cfb582793e82cf"
-    private let baseURL = "https://newsapi.org/v2/everything"
+    private let apiKey = "76f637672ec34173adb9f7bb29491af9"
+    private let baseURL = "https://newsapi.org/v2/top-headlines"
 
-    /// Recupera notizie per una query, ordinate per popolarità.
-    /// - Parameters:
-    ///   - query: termine di ricerca (es. "Italia")
-    ///   - from: data di inizio in formato "yyyy-MM-dd". Se nil, usa gli ultimi 7 giorni.
+    /// Recupera i top headlines.
+    ///
+    /// NB: /top-headlines accetta SOLO questi parametri: country, category,
+    /// sources, q, pageSize, page (+ apiKey). NON accetta `language`, `from`,
+    /// `to`, `sortBy` — passarli fa rispondere l'API con un 400, che è il
+    /// motivo per cui le notizie non si caricavano più.
+    ///
+    /// - Parameter query: qui viene interpretata come nome di categoria
+    ///   ("Tecnologia" → technology, "Sport" → sports). Se non corrisponde a
+    ///   nessuna categoria nota, viene ignorata e restituisce il feed
+    ///   generico per l'Italia (country=it), perché top-headlines non ha una
+    ///   categoria "Mondo"/internazionale: le uniche ammesse sono business,
+    ///   entertainment, general, health, science, sports, technology.
     func fetchNews(query: String, from: String? = nil) async throws -> [Article] {
         var components = URLComponents(string: baseURL)
         var queryItems = [
-            URLQueryItem(name: "q", value: query),
-            URLQueryItem(name: "sortBy", value: "popularity"),
-            URLQueryItem(name: "language", value: "it"),
+            URLQueryItem(name: "country", value: "us"),
             URLQueryItem(name: "apiKey", value: apiKey)
         ]
+        if let category = Self.category(for: query) {
+            queryItems.append(URLQueryItem(name: "category", value: category))
+        }
 
-        let fromDate = from ?? Self.defaultFromDate()
-        queryItems.append(URLQueryItem(name: "from", value: fromDate))
         components?.queryItems = queryItems
 
         guard let url = components?.url else {
@@ -44,6 +50,12 @@ final class NewsService {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
+            // NewsAPI restituisce un JSON con "code"/"message" che spiega
+            // esattamente cosa non va: stamparlo qui evita di doverlo
+            // indovinare la prossima volta.
+            if let body = String(data: data, encoding: .utf8) {
+                print("⚠️ NewsAPI error body:", body)
+            }
             throw NewsError.requestFailed("Status code non valido")
         }
 
@@ -55,12 +67,15 @@ final class NewsService {
         }
     }
 
-    /// Calcola la data di 7 giorni fa in formato "yyyy-MM-dd".
-    /// Il piano gratuito di NewsAPI non permette di andare più indietro nel tempo.
-    private static func defaultFromDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return formatter.string(from: sevenDaysAgo)
+    /// Mappa i nomi delle tab dell'app alle category valide di NewsAPI.
+    private static func category(for query: String) -> String? {
+        switch query.lowercased() {
+        case "tech", "technology": return "technology"
+        case "finance", "business": return "business"
+        case "sport", "sports": return "sports"
+        case "culture", "entertainment": return "entertainment"
+        case "science", "health": return "health"
+        default: return nil
+        }
     }
 }

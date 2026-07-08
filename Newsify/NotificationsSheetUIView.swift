@@ -13,10 +13,10 @@ struct NotificationsSheetUIView: View {
 
     var body: some View {
         VStack {
-            Text("Notifiche")
+            Text("Notifications")
                 .font(.title2)
                 .bold()
-                .foregroundStyle(Color.primary)
+                .foregroundStyle(Color.navy)
                 .padding(.top, 12)
 
             Spacer()
@@ -25,28 +25,26 @@ struct NotificationsSheetUIView: View {
                 emptyStateView
             }
         }
-        .presentationDetents([.medium]) // Apre lo sheet a metà schermo
+        .presentationDetents([.medium])
     }
-
-    // MARK: Stato vuoto
 
     private var emptyStateView: some View {
         VStack(spacing: 18) {
-            Image(systemName: "bell")
+            Image(systemName: "bell.slash.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 60, height: 72)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.navy)
 
             VStack(spacing: 8) {
-                Text("Nessuna notifica")
+                Text("No notifications")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(Color.primary)
+                    .foregroundStyle(Color.navy)
                     .multilineTextAlignment(.center)
 
-                Text("Le notifiche relative alle tue notizie preferite appariranno qui.")
+                Text("Notifications about your favorite news will appear here.")
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(Color.primary)
+                    .foregroundStyle(Color.navy)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .padding(.horizontal, 40)

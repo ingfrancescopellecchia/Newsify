@@ -6,6 +6,13 @@
 import Foundation
 import Combine
 
+struct BookmarkedArticle: Codable, Identifiable, Hashable {
+    let article: Article
+    let addedAt: Date
+
+    var id: String { article.id }
+}
+
 /// Gestisce la lista delle notizie salvate dall'utente.
 /// Singleton semplice: si accede ovunque con `BookmarksManager.shared`,
 /// così non serve modificare l'entry point dell'app per iniettarlo come
@@ -14,6 +21,7 @@ final class BookmarksManager: ObservableObject {
     static let shared = BookmarksManager()
 
     @Published private(set) var savedArticles: [Article] = []
+    @Published private(set) var savedBookmarks: [BookmarkedArticle] = []
 
     private let storageKey = "bookmarkedArticles"
 
@@ -23,7 +31,7 @@ final class BookmarksManager: ObservableObject {
 
     /// True se l'articolo è già tra i salvati.
     func isBookmarked(_ article: Article) -> Bool {
-        savedArticles.contains { $0.id == article.id }
+        savedBookmarks.contains { $0.article.id == article.id }
     }
 
     /// Aggiunge se non presente, rimuove se già presente.
@@ -38,28 +46,46 @@ final class BookmarksManager: ObservableObject {
 
     func add(_ article: Article) {
         guard !isBookmarked(article) else { return }
-        savedArticles.insert(article, at: 0)
+        savedBookmarks.insert(BookmarkedArticle(article: article, addedAt: Date()), at: 0)
+        syncSavedArticles()
         save()
     }
 
     func remove(_ article: Article) {
-        savedArticles.removeAll { $0.id == article.id }
+        savedBookmarks.removeAll { $0.article.id == article.id }
+        syncSavedArticles()
         save()
     }
 
     // MARK: - Persistenza
 
     private func save() {
-        // Richiede che Article (e i suoi campi, es. Source) siano Codable.
-        guard let data = try? JSONEncoder().encode(savedArticles) else { return }
+        guard let data = try? JSONEncoder().encode(savedBookmarks) else { return }
         UserDefaults.standard.set(data, forKey: storageKey)
     }
 
     private func load() {
-        guard
-            let data = UserDefaults.standard.data(forKey: storageKey),
-            let decoded = try? JSONDecoder().decode([Article].self, from: data)
-        else { return }
-        savedArticles = decoded
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
+
+        if let decoded = try? JSONDecoder().decode([BookmarkedArticle].self, from: data) {
+            savedBookmarks = decoded.sorted { $0.addedAt > $1.addedAt }
+            syncSavedArticles()
+            return
+        }
+
+        if let legacyArticles = try? JSONDecoder().decode([Article].self, from: data) {
+            savedBookmarks = legacyArticles.enumerated().map { index, article in
+                BookmarkedArticle(
+                    article: article,
+                    addedAt: Calendar.current.date(byAdding: .second, value: -index, to: Date()) ?? Date()
+                )
+            }
+            syncSavedArticles()
+            save()
+        }
+    }
+
+    private func syncSavedArticles() {
+        savedArticles = savedBookmarks.map(\.article)
     }
 }

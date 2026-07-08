@@ -85,7 +85,7 @@ struct BigNewsCardUIView: View {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color.navy)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
 
@@ -111,19 +111,20 @@ struct BigNewsCardUIView: View {
     }
 }
 
+
 #Preview {
     BigNewsCardUIView(
-        title: "Terremoto in Venezuela: palazzi crollati, 32 morti e 700 feriti",
-        source: "Prima Ora",
-        description: "Il terremoto di magnitudo 6.5 ha colpito nel pomeriggio la costa nord del Paese, distruggendo edifici e provocando il panico tra la popolazione. I soccorritori sono al lavoro..."
+        title: "Earthquake in Venezuela: buildings collapse, 32 dead and 700 injured",
+        source: "First Hour",
+        description: "The 6.5 magnitude earthquake struck the country's northern coast in the afternoon, destroying buildings and causing panic among residents. Rescue teams are at work..."
     )
 }
 
 #Preview("Dark") {
     BigNewsCardUIView(
-        title: "Terremoto in Venezuela: palazzi crollati, 32 morti e 700 feriti",
-        source: "Prima Ora",
-        description: "Il terremoto di magnitudo 6.5 ha colpito nel pomeriggio la costa nord del Paese, distruggendo edifici e provocando il panico tra la popolazione. I soccorritori sono al lavoro..."
+        title: "Earthquake in Venezuela: buildings collapse, 32 dead and 700 injured",
+        source: "First Hour",
+        description: "The 6.5 magnitude earthquake struck the country's northern coast in the afternoon, destroying buildings and causing panic among residents. Rescue teams are at work..."
     )
     .preferredColorScheme(.dark)
 }

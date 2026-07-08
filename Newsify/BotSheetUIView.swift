@@ -30,7 +30,7 @@ final class BotChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isGenerating = false
     @Published var isModelAvailable = true
-
+    var model = SystemLanguageModel.default
     private var session: LanguageModelSession?
 
     init() {
@@ -38,15 +38,14 @@ final class BotChatViewModel: ObservableObject {
     }
 
     private func checkAvailability() {
-        // Verifica che Apple Intelligence sia disponibile sul dispositivo
-        switch SystemLanguageModel.default.availability {
+        switch model.availability {
         case .available:
             isModelAvailable = true
             session = LanguageModelSession(instructions: """
-                Sei l'assistente AI di Newsify, un'app di news. \
-                Rispondi in italiano, in modo chiaro e conciso. \
-                Quando riassumi delle notizie, evidenzia i fatti principali \
-                senza aggiungere opinioni personali.
+                You are Newsify's AI assistant, built for a news app. \
+                Reply in English, clearly and concisely. \
+                When summarizing news, highlight the main facts \
+                without adding personal opinions.
                 """)
         case .unavailable:
             isModelAvailable = false
@@ -55,7 +54,7 @@ final class BotChatViewModel: ObservableObject {
         }
     }
 
-    /// Invia un messaggio libero dell'utente
+    /// Invia un messaggio libero dell'utente ricostruendo il contesto se necessario
     func send(_ text: String) async {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         messages.append(ChatMessage(role: .user, content: text))
@@ -66,15 +65,16 @@ final class BotChatViewModel: ObservableObject {
     func summarizeLast24Hours(articles: [Article]) async {
         let cutoff = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Date()
         let recent = articles.filter { article in
-            guard let date = Self.parseDate(article.publishedAt) else { return false }
+            guard let publishedAt = article.publishedAt,
+                  let date = Self.parseDate(publishedAt) else { return false }
             return date >= cutoff
         }
 
-        let userLabel = "Fammi un riassunto delle notizie delle ultime 24 ore"
+        let userLabel = "Summarize the news from the last 24 hours"
         messages.append(ChatMessage(role: .user, content: userLabel))
 
         guard !recent.isEmpty else {
-            messages.append(ChatMessage(role: .assistant, content: "Non ho trovato notizie pubblicate nelle ultime 24 ore."))
+            messages.append(ChatMessage(role: .assistant, content: "I couldn't find any news published in the last 24 hours."))
             return
         }
 
@@ -83,11 +83,11 @@ final class BotChatViewModel: ObservableObject {
         }.joined(separator: "\n")
 
         let prompt = """
-        Ecco un elenco di notizie delle ultime 24 ore:
+        Here is a list of news from the last 24 hours:
 
         \(articlesText)
 
-        Fai un riassunto sintetico (max 150 parole) organizzato per temi principali.
+        Write a concise summary (max 150 words) organized by main themes.
         """
 
         await generateResponse(prompt: prompt)
@@ -95,17 +95,17 @@ final class BotChatViewModel: ObservableObject {
 
     /// Chiede informazioni sull'ultimo conflitto tra le notizie disponibili
     func askAboutLatestConflict(articles: [Article]) async {
-        let userLabel = "Dammi un aggiornamento sull'ultimo conflitto"
+        let userLabel = "Give me an update on the latest conflict"
         messages.append(ChatMessage(role: .user, content: userLabel))
 
-        let keywords = ["conflitto", "guerra", "attacco", "esercito", "cessate il fuoco", "tensioni"]
+        let keywords = ["conflict", "war", "attack", "army", "military", "ceasefire", "tensions"]
         let relevant = articles.filter { article in
             let text = (article.title + " " + (article.description ?? "")).lowercased()
             return keywords.contains { text.contains($0) }
         }
 
         guard !relevant.isEmpty else {
-            messages.append(ChatMessage(role: .assistant, content: "Non ho trovato notizie su conflitti in corso tra quelle disponibili."))
+            messages.append(ChatMessage(role: .assistant, content: "I couldn't find any available news about ongoing conflicts."))
             return
         }
 
@@ -114,12 +114,12 @@ final class BotChatViewModel: ObservableObject {
         }.joined(separator: "\n")
 
         let prompt = """
-        Ecco delle notizie relative a conflitti in corso:
+        Here is news related to ongoing conflicts:
 
         \(articlesText)
 
-        Riassumi la situazione attuale del conflitto più rilevante, spiegando \
-        contesto ed eventuali sviluppi recenti, in modo neutrale e senza schierarti.
+        Summarize the current situation of the most relevant conflict, explaining \
+        context and any recent developments neutrally, without taking sides.
         """
 
         await generateResponse(prompt: prompt)
@@ -129,22 +129,22 @@ final class BotChatViewModel: ObservableObject {
 
     private func generateResponse(prompt: String) async {
         guard let session, isModelAvailable else {
-            messages.append(ChatMessage(role: .assistant, content: "Apple Intelligence non è disponibile su questo dispositivo."))
+            messages.append(ChatMessage(role: .assistant, content: "Apple Intelligence is not available on this device."))
             return
         }
 
         isGenerating = true
-        // Placeholder per lo streaming
         let placeholderIndex = messages.count
         messages.append(ChatMessage(role: .assistant, content: ""))
 
         do {
             let stream = session.streamResponse(to: prompt)
             for try await partial in stream {
-                messages[placeholderIndex].content = partial.content
+                // BUG FIX: Usiamo += per sommare i token dello streaming anziché sovrascriverli
+                messages[placeholderIndex].content += partial.content
             }
         } catch {
-            messages[placeholderIndex].content = "Si è verificato un errore: \(error.localizedDescription)"
+            messages[placeholderIndex].content = "An error occurred: \(error.localizedDescription)"
         }
 
         isGenerating = false
@@ -152,20 +152,18 @@ final class BotChatViewModel: ObservableObject {
 
     // MARK: - Utility
 
-    /// Converte la stringa `publishedAt` di NewsAPI (formato ISO8601) in Date
     private static func parseDate(_ string: String) -> Date? {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         if let date = formatter.date(from: string) {
             return date
         }
-        // Fallback nel caso manchino i millisecondi o ci sia un formato leggermente diverso
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter.date(from: string)
     }
 }
 
-// MARK: - Router View (compatibile con tutte le versioni iOS)
+// MARK: - Router View
 
 struct BotSheetUIView: View {
     @Environment(\.dismiss) var dismiss
@@ -179,7 +177,7 @@ struct BotSheetUIView: View {
                 Image(systemName: "sparkles.slash")
                     .font(.system(size: 40))
                     .foregroundColor(.secondary)
-                Text("Assistente AI richiede iOS 18.1 o superiore")
+                Text("AI Assistant requires iOS 18.1 or later")
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -190,7 +188,7 @@ struct BotSheetUIView: View {
     }
 }
 
-// MARK: - Contenuto reale (richiede iOS 18.1+)
+// MARK: - Contenuto reale (iOS 18.1+)
 
 @available(iOS 18.1, *)
 private struct BotSheetContentView: View {
@@ -217,8 +215,8 @@ private struct BotSheetContentView: View {
 
     private var header: some View {
         HStack {
-            Text("Assistente AI")
-                .foregroundColor(.primary)
+            Text("AI Assistant")
+                .foregroundColor(.navy)
                 .font(.title2)
                 .bold()
             Spacer()
@@ -234,21 +232,21 @@ private struct BotSheetContentView: View {
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
 
-            Text("Chiedimi qualcosa sulle notizie")
+            Text("Ask me something about the news")
                 .foregroundColor(.secondary)
                 .font(.subheadline)
 
             VStack(spacing: 10) {
                 suggestionButton(
                     icon: "clock.arrow.circlepath",
-                    text: "Riassumi le ultime 24 ore"
+                    text: "Summarize the last 24 hours"
                 ) {
                     Task { await viewModel.summarizeLast24Hours(articles: articles) }
                 }
 
                 suggestionButton(
                     icon: "globe",
-                    text: "Aggiornami sull'ultimo conflitto"
+                    text: "Update me on the latest conflict"
                 ) {
                     Task { await viewModel.askAboutLatestConflict(articles: articles) }
                 }
@@ -270,7 +268,7 @@ private struct BotSheetContentView: View {
             }
             .padding()
             .background(Color(.secondarySystemBackground))
-            .foregroundColor(.primary)
+            .foregroundColor(.navy)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
@@ -287,8 +285,9 @@ private struct BotSheetContentView: View {
                 }
                 .padding()
             }
-            .onChange(of: viewModel.messages.count) {
-                if let last = viewModel.messages.last {
+            
+            .onChange(of: viewModel.messages) { _, newMessages in
+                if let last = newMessages.last {
                     withAnimation {
                         proxy.scrollTo(last.id, anchor: .bottom)
                     }
@@ -304,7 +303,7 @@ private struct BotSheetContentView: View {
             Text(message.content)
                 .padding(12)
                 .background(message.role == .user ? Color.accentColor : Color(.secondarySystemBackground))
-                .foregroundColor(message.role == .user ? .white : .primary)
+                .foregroundColor(message.role == .user ? .white : .navy)
                 .cornerRadius(14)
 
             if message.role == .assistant { Spacer(minLength: 40) }
@@ -313,7 +312,7 @@ private struct BotSheetContentView: View {
 
     private var inputBar: some View {
         HStack {
-            TextField("Scrivi un messaggio...", text: $inputText)
+            TextField("Write a message...", text: $inputText)
                 .textFieldStyle(.roundedBorder)
 
             Button {
@@ -333,4 +332,3 @@ private struct BotSheetContentView: View {
 #Preview {
     BotSheetUIView(articles: [])
 }
-

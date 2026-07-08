@@ -14,15 +14,15 @@ struct CategUIView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Image(systemName: iconName)
-                .foregroundColor(.black)
+                .foregroundColor(.navy)
                 .frame(width: 24, height: 24)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.navy)
                 
-                Text("\(count) ARTICOLI")
+                Text("\(count) ARTICLES")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -30,7 +30,7 @@ struct CategUIView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 110)
-        .background(Color(.systemBackground))
+        .background(Color(.biancosporco))
         .cornerRadius(18)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
     }

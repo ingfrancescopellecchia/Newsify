@@ -16,7 +16,7 @@ struct SmallNewsCardUIView: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(.navy)
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)
             
@@ -34,5 +34,5 @@ struct SmallNewsCardUIView: View {
 }
 
 #Preview {
-    SmallNewsCardUIView(title: "Titolo della notizia", source:"Cronaca")
+    SmallNewsCardUIView(title: "News headline", source: "Local News")
 }

@@ -18,7 +18,7 @@ final class NewsViewModel: ObservableObject {
         do {
             articles = try await NewsService.shared.fetchNews(query: query)
         } catch {
-            errorMessage = "Impossibile caricare le notizie. Riprova."
+            errorMessage = "Unable to load news. Please try again."
         }
         isLoading = false
     }

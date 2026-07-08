@@ -9,22 +9,21 @@ import SwiftUI
 
 struct ExploreView: View {
     @State var catSelected = 0
-    @State private var navigateToCategory = false
     @State private var showBotSheet = false
     @State private var showNotificationsSheet = false
-    // Notizia selezionata per aprire il dettaglio: usando questa invece di un
-    // vero NavigationLink nella riga, evitiamo che la List aggiunga la sua
-    // freccetta automatica (che riservava spazio a destra e scentrava la card).
+    
+    // Notizia selezionata per aprire il dettaglio
     @State private var selectedArticle: Article?
-
+    
     @StateObject private var viewModel = NewsViewModel()
     @ObservedObject private var bookmarksManager = BookmarksManager.shared
-
+    
     var body: some View {
         NavigationStack {
-            ZStack {                Color(.systemGroupedBackground)
+            ZStack {
+                Color(.cream)
                     .ignoresSafeArea()
-
+                
                 VStack(spacing: 0) {
                     // BARRA SUPERIORE: Bot AI, Titolo e Notifiche
                     HStack {
@@ -33,37 +32,33 @@ struct ExploreView: View {
                         } label: {
                             Image(systemName: "sparkles")
                                 .font(.title2)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.navy)
                                 .padding(10)
                                 .background(Color.black.opacity(0.04), in: Circle())
                         }
-
                         Spacer()
-
                         Text("Explore")
                             .font(.largeTitle)
                             .bold()
-                            .foregroundStyle(.primary)
-
+                            .foregroundStyle(.navy)
                         Spacer()
-
                         Button {
                             showNotificationsSheet = true
                         } label: {
                             Image(systemName: "bell.fill")
                                 .font(.title2)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.navy)
                                 .padding(10)
                                 .background(Color.black.opacity(0.04), in: Circle())
                         }
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
-
+                    
                     // SELETTORE CATEGORIE
-                    Picker("choose a cat", selection: $catSelected) {
-                        Text("Per te").tag(0)
-                        Text("Mondo").tag(1)
+                    Picker("Choose a category", selection: $catSelected) {
+                        Text("For You").tag(0)
+                        Text("World").tag(1)
                         Text("Tech").tag(2)
                         Text("Sport").tag(3)
                     }
@@ -71,10 +66,10 @@ struct ExploreView: View {
                     .tint(.accentColor)
                     .padding(.horizontal)
                     .padding(.top, 10)
-
+                    
                     // SCRITTA IN PRIMO PIANO
                     HStack {
-                        Text("IN PRIMO PIANO OGGI")
+                        Text("TODAY'S TOP STORIES")
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
@@ -82,21 +77,17 @@ struct ExploreView: View {
                             .font(.system(size: 12, weight: .bold))
                         Spacer()
                     }
-
+                    
                     // FEED DELLE NOTIZIE
-                    // Nota: qui uso una List (invece della ScrollView di prima) perché
-                    // .swipeActions richiede una List per funzionare. Tutto lo stile di
-                    // default della List viene azzerato sotto per mantenere le card
-                    // identiche a come apparivano nella ScrollView.
                     Group {
                         if viewModel.isLoading && viewModel.articles.isEmpty {
                             Spacer()
-                            ProgressView("Caricamento notizie…")
+                            ProgressView("Loading news...")
                             Spacer()
                         } else if let error = viewModel.errorMessage, viewModel.articles.isEmpty {
                             Spacer()
                             ContentUnavailableView(
-                                "Errore",
+                                "Error",
                                 systemImage: "wifi.exclamationmark",
                                 description: Text(error)
                             )
@@ -105,7 +96,7 @@ struct ExploreView: View {
                             List {
                                 ForEach(Array(viewModel.articles.enumerated()), id: \.element.id) { index, article in
                                     newsRow(for: article, isFirst: index == 0)
-                                        .padding(.vertical, 7) // ~14pt totale tra una card e l'altra, come nella VStack originale
+                                        .padding(.vertical, 7)
                                         .listRowInsets(EdgeInsets())
                                         .listRowSeparator(.hidden)
                                         .listRowBackground(Color.clear)
@@ -125,16 +116,15 @@ struct ExploreView: View {
                             }
                         }
                     }
+                    // QUI AVVIENE LA MAGIA: Al cambio del selettore, scarichiamo i nuovi dati
                     .onChange(of: catSelected) { oldValue, newValue in
-                        if newValue != 0 {
-                            navigateToCategory = true
+                        Task {
+                            await viewModel.loadNews(query: query(for: newValue))
                         }
                     }
                 } // fine vstack
             } // fine zstack
-            .navigationDestination(isPresented: $navigateToCategory) {
-                destinationView(for: catSelected)
-            }
+            // Navigazione solo verso il dettaglio della notizia
             .navigationDestination(item: $selectedArticle) { article in
                 NewsDetailView(article: article)
             }
@@ -145,25 +135,15 @@ struct ExploreView: View {
                 NotificationsSheetUIView()
             }
             .task {
-                // Carica le notizie della home ("Per te") al primo avvio
-                await viewModel.loadNews(query: query(for: 0))
+                // Load the home feed ("For You") on first launch
+                await viewModel.loadNews(query: query(for: catSelected))
             }
         } // fine navstack
-        // Imposta qui il colore del brand: si applica a tint/accent in tutta la view,
-        // e ancora meglio se lo definisci come "Accent Color" nell'Asset Catalog
-        // (con una variante Any/Dark), così ogni .tint lo eredita da solo.
         .tint(.brand)
     }
-
-    /// Riga singola del feed: card grande per la prima notizia, piccola per le altre.
-    /// Estratta in una funzione separata per evitare timeout del type-checker
-    /// (il compilatore fatica con troppi modificatori/condizioni annidate in un'unica espressione).
-    ///
-    /// Uso un Button (non un NavigationLink): la List aggiungerebbe in automatico
-    /// una freccetta di sistema che riserva spazio a destra della riga.
-    /// Le card (BigNewsCardUIView / SmallNewsCardUIView) hanno già un
-    /// `.padding(.horizontal)` integrato che dà margini simmetrici da sole,
-    /// quindi qui non serve aggiungere nessun'altra freccetta o padding extra.
+    
+    // MARK: - Subviews & Helpers
+    
     @ViewBuilder
     private func newsRow(for article: Article, isFirst: Bool) -> some View {
         Button {
@@ -185,9 +165,7 @@ struct ExploreView: View {
         }
         .buttonStyle(.plain)
     }
-
-    /// Bottone mostrato durante lo swipe: salva l'articolo nei bookmarks,
-    /// oppure lo rimuove se è già stato salvato in precedenza.
+    
     @ViewBuilder
     private func bookmarkButton(for article: Article) -> some View {
         let saved = bookmarksManager.isBookmarked(article)
@@ -197,36 +175,20 @@ struct ExploreView: View {
             }
         } label: {
             Label(
-                saved ? "Rimuovi" : "Salva",
+                saved ? "Remove" : "Save",
                 systemImage: saved ? "bookmark.slash.fill" : "bookmark.fill"
             )
         }
         .tint(saved ? .gray : .brand)
     }
-
-    /// Query di ricerca associata a ogni tab del picker.
-    /// "Per te" mostra un feed generico sull'Italia; le altre categorie
-    /// vengono comunque gestite dalla navigazione verso CategoryPlaceholderUIView.
+    
     private func query(for category: Int) -> String {
         switch category {
-        case 1: return "Mondo"
-        case 2: return "Tecnologia"
+        case 0: return "General" // Sostituisci "General" con la tua query di default per "For You"
+        case 1: return "World"
+        case 2: return "Tech"
         case 3: return "Sport"
-        default: return "Italia"
-        }
-    }
-
-    @ViewBuilder
-    private func destinationView(for category: Int) -> some View {
-        switch category {
-        case 1:
-            CategoryPlaceholderUIView(categoryName: "Mondo")
-        case 2:
-            CategoryPlaceholderUIView(categoryName: "Tech")
-        case 3:
-            CategoryPlaceholderUIView(categoryName: "Sport")
-        default:
-            EmptyView()
+        default: return "General"
         }
     }
 }

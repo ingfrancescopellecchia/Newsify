@@ -65,7 +65,7 @@ final class ArticleAudioPlayer: NSObject, ObservableObject {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = Self.bestItalianVoice()
+        utterance.voice = Self.bestEnglishVoice()
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.pitchMultiplier = 1.0
 
@@ -74,21 +74,18 @@ final class ArticleAudioPlayer: NSObject, ObservableObject {
         synthesizer.speak(utterance)
     }
 
-    /// Tra tutte le voci italiane installate sul dispositivo, sceglie quella di qualità
-    /// migliore: Premium (la più naturale) > Enhanced > standard di sistema.
-    /// Le voci Premium/Enhanced NON sono incluse di default: vanno scaricate da
-    /// Impostazioni > Accessibilità > Contenuto vocale > Voci > Italiano.
-    private static func bestItalianVoice() -> AVSpeechSynthesisVoice? {
-        let italianVoices = AVSpeechSynthesisVoice.speechVoices()
-            .filter { $0.language == "it-IT" }
+    /// Chooses the best installed English voice: Premium > Enhanced > system default.
+    private static func bestEnglishVoice() -> AVSpeechSynthesisVoice? {
+        let englishVoices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language == "en-US" }
 
-        if let premium = italianVoices.first(where: { $0.quality == .premium }) {
+        if let premium = englishVoices.first(where: { $0.quality == .premium }) {
             return premium
         }
-        if let enhanced = italianVoices.first(where: { $0.quality == .enhanced }) {
+        if let enhanced = englishVoices.first(where: { $0.quality == .enhanced }) {
             return enhanced
         }
-        return AVSpeechSynthesisVoice(language: "it-IT")
+        return AVSpeechSynthesisVoice(language: "en-US")
     }
 }
 

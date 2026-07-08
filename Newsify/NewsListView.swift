@@ -12,10 +12,10 @@ struct NewsListView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    ProgressView("Caricamento notizie…")
+                    ProgressView("Loading news...")
                 } else if let error = viewModel.errorMessage {
                     ContentUnavailableView(
-                        "Errore",
+                        "Error",
                         systemImage: "wifi.exclamationmark",
                         description: Text(error)
                     )
