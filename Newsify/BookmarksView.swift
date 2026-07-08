@@ -125,7 +125,7 @@ struct BookmarksView: View {
 
     private var emptyStateView: some View {
         VStack(spacing: 18) {
-            Image(systemName: "bookmark")
+            Image(systemName: "bookmark.slash.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 60, height: 72)

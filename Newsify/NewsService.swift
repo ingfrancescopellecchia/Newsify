@@ -14,7 +14,7 @@ enum NewsError: Error {
 final class NewsService {
     static let shared = NewsService()
 
-    private let apiKey = "76f637672ec34173adb9f7bb29491af9"
+    private let apiKey = "228b6c3cf68c411ea1cfb582793e82cf"
     private let baseURL = "https://newsapi.org/v2/top-headlines"
 
     /// Recupera i top headlines.
