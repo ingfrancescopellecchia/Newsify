@@ -39,9 +39,14 @@ struct SettingUIView: View {
                     TextField("Nickname", text: $nickname)
                         .foregroundStyle(Color("navy"))
                     
-                    Label("Milan, Italy", systemImage: "location.fill")
+                    Label{
+                        Text("Milan, Italy")
+                            .foregroundStyle(Color("navy"))
+                    }
+                    icon: {
+                        Image(systemName: "location.fill")
+                    }
                 }
-                
                 Section("Notifications") {
                     Toggle("Breaking News", isOn: $breakingNews)
                         .foregroundStyle(Color("navy"))
@@ -63,14 +68,24 @@ struct SettingUIView: View {
                     }
                 }
             }
-           
-                .navigationTitle("Profile")// Gestione corretta del titolo nella barra di navigazione
-                .scrollContentBackground(.hidden) // 1. Nasconde lo sfondo di default della Form (iOS 16+)
-                .background(Color("cream")) // 2. Applica il tuo colore personalizzato
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack {
+                        Text("Profile")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color("navy"))
+                        Spacer()
+                        
+                    }
+                }
             }
+            .scrollContentBackground(.hidden) // 1. Nasconde lo sfondo di default della Form (iOS 16+)
+            .background(Color("cream")) // 2. Applica il tuo colore personalizzato
         }
     }
-
+}
 #Preview {
     SettingUIView()
 }
