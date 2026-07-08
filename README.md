@@ -20,6 +20,12 @@ The app also includes AI-generated audio for articles, allowing you to listen in
 * iPhone 15 or newer (required for AI features)
 * iOS 26 or later
 
+## Data Source
+
+Newsify uses NewsAPI to retrieve articles from a variety of news publishers.
+
+This project is not affiliated with or endorsed by NewsAPI.
+
 ## Built with
 
 * Swift
