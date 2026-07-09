@@ -79,7 +79,7 @@ struct SearchView: View {
             Text("CATEGORIES")
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.secondary)
+                .foregroundColor(.navy)
 
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(categories) { category in
@@ -102,7 +102,7 @@ struct SearchView: View {
             Text(searchText.isEmpty ? "TRENDING NOW" : "SEARCH RESULTS")
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.secondary)
+                .foregroundColor(.navy)
 
             VStack(spacing: 12) {
                 if viewModel.isLoading && viewModel.articles.isEmpty {

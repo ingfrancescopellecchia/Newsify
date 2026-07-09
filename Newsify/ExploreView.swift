@@ -70,7 +70,7 @@ struct ExploreView: View {
                     // SCRITTA IN PRIMO PIANO
                     HStack {
                         Text("TODAY'S TOP STORIES")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.navy)
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                             .padding(.bottom, 8)

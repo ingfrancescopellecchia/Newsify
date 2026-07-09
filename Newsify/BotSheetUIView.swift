@@ -140,8 +140,8 @@ final class BotChatViewModel: ObservableObject {
         do {
             let stream = session.streamResponse(to: prompt)
             for try await partial in stream {
-                // BUG FIX: Usiamo += per sommare i token dello streaming anziché sovrascriverli
-                messages[placeholderIndex].content += partial.content
+                // FIX APPLICATO: Sostituito += con = per evitare la duplicazione del testo cumulativo
+                messages[placeholderIndex].content = partial.content
             }
         } catch {
             messages[placeholderIndex].content = "An error occurred: \(error.localizedDescription)"
@@ -285,7 +285,6 @@ private struct BotSheetContentView: View {
                 }
                 .padding()
             }
-            
             .onChange(of: viewModel.messages) { _, newMessages in
                 if let last = newMessages.last {
                     withAnimation {
@@ -327,8 +326,4 @@ private struct BotSheetContentView: View {
         }
         .padding()
     }
-}
-
-#Preview {
-    BotSheetUIView(articles: [])
 }

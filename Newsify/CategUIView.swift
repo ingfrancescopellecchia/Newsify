@@ -21,10 +21,7 @@ struct CategUIView: View {
                 Text(title)
                     .fontWeight(.bold)
                     .foregroundColor(.navy)
-                
-                Text("\(count) ARTICLES")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+              
             }
         }
         .padding()
@@ -36,5 +33,5 @@ struct CategUIView: View {
     }
 }
 #Preview {
-    CategUIView(title: "MONDO", count: 248, iconName: "globe")
+    CategUIView(title: "MONDO", count:0, iconName: "globe")
 }

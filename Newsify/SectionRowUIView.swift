@@ -18,14 +18,14 @@ struct SectionRowUIView: View {
             Text("\(rank)")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundColor(.navy)
                 .frame(width: 20, alignment: .leading)
             
             // Titolo della notizia
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundColor(.navy)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
